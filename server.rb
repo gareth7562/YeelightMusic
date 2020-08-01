@@ -13,6 +13,7 @@ end
 @socket = TCPServer.new('0.0.0.0', PORT)
 @command_socket = TCPServer.new('0.0.0.0', 1337)
 @clientArray = Array.new
+@command = nil
 
 trap "SIGINT" do
     puts "Exiting"
@@ -51,6 +52,7 @@ def handle_connection(index)
 
                 @clientArray.delete_at(index)
                 @clientArray.compact
+                @command = nil
                 end
 		@clientArray.each do |client|
 		
