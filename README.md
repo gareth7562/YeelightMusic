@@ -9,8 +9,9 @@ Run server with:
 
 Then play tracks on any device via the server ip i.e.
 
-*node myapp.js <server ip> "tracks/chill.mp3"*
+*node myapp.js 192.168.1.56 "tracks/chill.mp3"*
   
+replace IP with your own server IP
 I had issues with running the server on localhost if that doesnt work, try using a seperate computer on the same network to run the server.
 
 the IPs for the bulbs must be set with the ips array variable in myapp.js
