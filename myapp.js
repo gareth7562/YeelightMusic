@@ -12,23 +12,15 @@ var net = require('net');
 
 
 const musicSource = process.argv[3] //get the first argument on cli
-var color1 = 255;
-var color2 = 65280;
-var color3 = 16711680;
 var trackLength = 0;
 var peaks = 0;
-var divider = 0;
 const buffer = fs.readFileSync(musicSource);
 const duration = getMP3Duration(buffer);
-
-nextColor = color1;
 
 server = process.argv[2];
 ips = ["192.168.1.59", "192.168.1.55"];
 
 device = {};
-prevColor = 0;
-var music_enabled = false;
 var color = 1
 
 
