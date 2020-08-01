@@ -7,7 +7,7 @@ const getMP3Duration = require('get-mp3-duration');
 var net = require('net');
 
 
-const musicSource = process.argv[2] //get the first argument on cli
+const musicSource = process.argv[3] //get the first argument on cli
 var color1 = 255;
 var color2 = 65280;
 var color3 = 16711680;
@@ -20,6 +20,7 @@ const duration = getMP3Duration(buffer);
 nextColor = color1;
 
 ips = ["192.168.1.55"];
+server = process.argv[2];
 //ips = ["192.168.1.59", "192.168.1.55"];
 
 device = {};
@@ -55,19 +56,19 @@ function updateLights(device) {
 			device.sendCommand({
 			id: 1337,
 			method: 'set_music',
-			params: [0, "192.168.1.56", 55440]
+			params: [0, server, 55440]
 		});
 			device.sendCommand({
 			id: 1337,
 			method: 'set_music',
-			params: [1, "192.168.1.56", 55440]
+			params: [1, server, 55440]
 		});
 	});
 
 }
 
 var client = new net.Socket();
-client.connect(1337, '192.168.1.56', function() {
+client.connect(1337, server, function() {
 	console.log('Connected');
 	client.write('Hello, server!.');
 });
@@ -102,9 +103,6 @@ const musicBeatScheduler = new MusicBeatScheduler(pos => {
 			client.write("g\r\n")
 			break;
 
-			case 3:
-			client.write("b\r\n")
-			break;
 		default:
 
 
