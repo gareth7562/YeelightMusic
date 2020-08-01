@@ -9,7 +9,7 @@ Run server with:
 
 Then play tracks on any device via the server ip i.e.
 
-*node myapp.js <server ip> "tracks/chill.mp3"*
+*node myapp.js 192.168.whatever. "tracks/chill.mp3"*
   
 I had issues with running the server on localhost if that doesnt work, try using a seperate computer on the same network to run the server.
 
