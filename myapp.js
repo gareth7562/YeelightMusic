@@ -79,7 +79,7 @@ client.on('close', function() {
 const musicGraph = new MusicGraph()
 
 const musicBeatScheduler = new MusicBeatScheduler(pos => {
-    console.log(`peak at ${pos}ms`) // your music effect goes here
+    //console.log(`peak at ${pos}ms`) // your music effect goes here
 
 
     color++;
@@ -116,7 +116,7 @@ createMusicStream(musicSource)
 
 
 
-        console.log(`peak-detected at ${pos}ms, detected bpm ${bpm}`)
+        //console.log(`peak-detected at ${pos}ms, detected bpm ${bpm}`)
     })
     .on('end', () => {
         fs.writeFileSync('graph.svg', musicGraph.getSVG())
