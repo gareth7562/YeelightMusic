@@ -13,7 +13,8 @@ end
 @socket = TCPServer.new('0.0.0.0', PORT)
 @command_socket = TCPServer.new('0.0.0.0', 1337)
 @clientArray = Array.new
-def handle_connection
+def handle_connection(index)
+
 
                 red = 16711680
                 blue = 255
@@ -23,10 +24,18 @@ def handle_connection
                 loop do
 
 
+                begin
                 @command = @commander.gets(20)
+                rescue Errno::ECONNRESET => e
+                puts "Connection reset"
+                @clientArray.delete_at(index)
 
+                end
 
                 @clientArray.each do |client|
+
+                if(client != nil) then
+
 
                 client.send(set_power("on", "smooth", 1), 0)
 
@@ -45,10 +54,10 @@ def handle_connection
                 end
                 end
                 end
+                end
 
 end
 end
-
 
 def handle_commander
         @commander = @command_socket.accept
@@ -59,14 +68,12 @@ puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
 puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a track via this server"
 
 
-Thread.new {  handle_commander }
-
-
 i = 0
 loop do
+                Thread.new {  handle_commander }
                 @clientArray[i] = @socket.accept
-                Thread.new {
-                  handle_connection
+                @t = Thread.new {
+                  handle_connection(i)
         }
         i = i+1
         end
