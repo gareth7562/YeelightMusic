@@ -26,7 +26,7 @@ var color = 1
 
 
 
-for (var i = 0; i < ips.length; i++) {
+for (var i = 0; i < ips.length + 1; i++) {
 
     device[i] = new YeeDevice({
         host: ips[i],
