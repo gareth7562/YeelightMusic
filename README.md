@@ -16,4 +16,6 @@ I had issues with running the server on localhost if that doesnt work, try using
 the IPs for the bulbs must be set with the ips array variable in myapp.js
 
 mine are set to 192.168.1.55 and 192.168.1.59 
-you can get these from the yeelight app
+you can get these from the yeelight app 
+
+only tested with 2 bulbs and it is setup to vary between 2 colors although it would be easy to add more
