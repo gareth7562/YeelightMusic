@@ -23,7 +23,7 @@ only tested with 2 bulbs and it is setup to vary between 2 colors although it wo
 
 make sure to install the relevant node libraries with npm
 These are
-* yeelight-lamp-client
+* yeelight-platform
 * speaker
 * create-music-stream
 * music-beat-detector
