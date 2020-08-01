@@ -23,9 +23,8 @@ const duration = getMP3Duration(buffer);
 
 nextColor = color1;
 
-ips = ["192.168.1.55"];
 server = process.argv[2];
-//ips = ["192.168.1.59", "192.168.1.55"];
+ips = ["192.168.1.59", "192.168.1.55"];
 
 device = {};
 prevColor = 0;
