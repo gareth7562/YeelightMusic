@@ -19,3 +19,13 @@ mine are set to 192.168.1.55 and 192.168.1.59
 you can get these from the yeelight app 
 
 only tested with 2 bulbs and it is setup to vary between 2 colors although it would be easy to add more
+
+
+make sure to install the relevant node libraries with npm
+These are
+yeelight-lamp-client
+speaker
+create-music-stream
+music-beat-detector
+get-mp3-duration - this isnt used yet
+
