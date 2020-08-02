@@ -17,6 +17,7 @@ end
 @reset = false
 @commander = nil
 
+
 def resetConnection(index)
 
 
@@ -53,9 +54,16 @@ def sendToClients(command)
 rescue Errno::EPIPE
     client.close
     @clientArray.delete(client)
-  
+
+rescue Errno::ECONNRESET 
+    client.close
+    @clientArray.delete(client)
+    
     
   end
+    if !client.closed? then
+    client.send(command, 0)
+    end
   end
 
 end
@@ -65,14 +73,18 @@ def handle_connection(index)
 red = 16711680
 blue = 255
 green = 65280
-default_color = 0
+prevCommand = nil
+response_time = 0 #ms response from bulb
+transition_effect = "sudden"
+
+default_color = 255 
 puts "New client! #{[index]}"
 puts @clientArray
 loop do
 
 begin
 if (@commander != nil) then
-@command = @commander.gets(100)
+@command = @commander.gets(20)
 end
 rescue Errno::ECONNRESET => e
   resetConnection(index)
@@ -91,28 +103,27 @@ if (@command == "disconnect") then
   resetConnection(index)
 end
 
-if (@command == "default") then
 
-  sendToClients(set_rgb(default_color, "smooth", 100))
 
-end
 
-if (@command == "r") then
+if (@command == "r" && prevCommand != "r") then
 
-  sendToClients(set_rgb(red, "smooth", 100))
+  sendToClients(set_rgb(red, transition_effect, response_time))
 
 end
 
-if (@command == "g") then
+if (@command == "g" && prevCommand != "g") then
 
-  sendToClients(set_rgb(green, "smooth", 100))
+  sendToClients(set_rgb(green, transition_effect, response_time))
+
+end
+
+if (@command == "b" && prevCommand != "b") then
+  sendToClients(set_rgb(blue, transition_effect, response_time))
 
 end
 
-if (@command == "b") then
-  sendToClients(set_rgb(blue, "smooth", 100))
-
-end
+  prevCommand = @command
 end
 end
 

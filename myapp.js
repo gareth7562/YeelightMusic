@@ -104,10 +104,8 @@ process.on("SIGINT", function () {
 const musicGraph = new MusicGraph()
 
 const musicBeatScheduler = new MusicBeatScheduler(pos => {
-    //console.log(`peak at ${pos}ms`) // your music effect goes here
+    console.log(`peak at ${pos}ms`) // your music effect goes here
 
-
-    color++;
 
     if (color > 2) {
         color = 1;
@@ -124,14 +122,14 @@ const musicBeatScheduler = new MusicBeatScheduler(pos => {
         default:
 
 
-    }
+  }
+      color++;
 
 });
 
 const musicBeatDetector = new MusicBeatDetector({
     plotter: musicGraph.getPlotter(),
     scheduler: musicBeatScheduler.getScheduler(),
-    sensitivity: 0.5,
 });
 
 createMusicStream(musicSource)
@@ -140,8 +138,7 @@ createMusicStream(musicSource)
 
 
 
-
-        //console.log(`peak-detected at ${pos}ms, detected bpm ${bpm}`)
+        console.log(`peak-detected at ${pos}ms, detected bpm ${bpm}`)
     })
     .on('end', () => {
         fs.writeFileSync('graph.svg', musicGraph.getSVG())
