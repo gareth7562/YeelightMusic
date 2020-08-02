@@ -30,4 +30,4 @@ These are
 * music-beat-detector
 * get-mp3-duration - this isnt used yet
 
-If you downloaded previous builds then there might be issues with network disconnections and reconnections. This has been solved in latest build
+If you downloaded previous revisions then there might be issues with network disconnections and reconnections. This has been solved in latest code
