@@ -1,5 +1,5 @@
-#YeeLightMusic
-
+YeeLightMusic
+-------------
 
 my attempt at a Yeelight Music Server in Ruby and NodeJS client for playing mp3 files. This will control the lights on a yeelight without capping the amount of requests
 
