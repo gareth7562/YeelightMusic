@@ -35,9 +35,9 @@ for (var i = 0; i < ips.length + 1; i++) {
     device[i].connect();
 
 
-    device[i].on('deviceUpdate', (newProps) => {
+    /*device[i].on('deviceUpdate', (newProps) => {
         console.log(newProps)
-    })
+    })*/
 
 
     updateLights(device[i]);
@@ -104,8 +104,7 @@ process.on("SIGINT", function () {
 const musicGraph = new MusicGraph()
 
 const musicBeatScheduler = new MusicBeatScheduler(pos => {
-    console.log(`peak at ${pos}ms`) // your music effect goes here
-
+    //console.log(`peak at ${pos}ms`) // your music effect goes here
 
     if (color > 2) {
         color = 1;
@@ -124,7 +123,6 @@ const musicBeatScheduler = new MusicBeatScheduler(pos => {
 
   }
       color++;
-
 });
 
 const musicBeatDetector = new MusicBeatDetector({
@@ -138,7 +136,7 @@ createMusicStream(musicSource)
 
 
 
-        console.log(`peak-detected at ${pos}ms, detected bpm ${bpm}`)
+        //console.log(`peak-detected at ${pos}ms, detected bpm ${bpm}`)
     })
     .on('end', () => {
         fs.writeFileSync('graph.svg', musicGraph.getSVG())

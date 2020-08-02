@@ -78,13 +78,11 @@ response_time = 0 #ms response from bulb
 transition_effect = "sudden"
 
 default_color = 255 
-puts "New client! #{[index]}"
-puts @clientArray
 loop do
 
 begin
 if (@commander != nil) then
-@command = @commander.gets(20)
+@command = @commander.gets(5)
 end
 rescue Errno::ECONNRESET => e
   resetConnection(index)
@@ -130,6 +128,7 @@ end
 def handle_commander
 
 @commander = @command_socket.accept
+@commander.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 end
 
 puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
@@ -137,13 +136,21 @@ puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a t
 
 loop do
 
-  @clientArray.push(@socket.accept)
+  new_client = @socket.accept
+  sock_domain, remote_port, remote_hostname, remote_ip = new_client.peeraddr
+  puts "New Client #{remote_ip}"  
+  new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+  @clientArray.push(new_client)
 
 Thread.new {
   handle_commander
 }
 @t = Thread.new {
-  handle_connection(@clientArray.size);
+  index = 0
+  if @clientArray.size > 0 then
+    index = @clientArray.size - 1
+  end
+  handle_connection(index);
 }
 
 end
