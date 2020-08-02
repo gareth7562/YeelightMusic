@@ -25,7 +25,6 @@ var color = 1
 
 
 
-
 for (var i = 0; i < ips.length + 1; i++) {
 
     device[i] = new YeeDevice({
@@ -79,6 +78,26 @@ client.on('data', function(data) {
 
 client.on('close', function() {
     console.log('Connection closed');
+});
+
+
+if (process.platform === "win32") {
+  var rl = require("readline").createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  rl.on("SIGINT", function () {
+    process.emit("SIGINT");
+  });
+}
+
+process.on("SIGINT", function () {
+  //graceful shutdown
+
+  client.write("disconnect\r\n")
+  process.exit();
+
 });
 
 
