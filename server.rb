@@ -32,7 +32,6 @@ end
   
 trap "SIGINT" do
   puts "Exiting"
-  resetConnection
 
 if @t != nil then
 @t.kill

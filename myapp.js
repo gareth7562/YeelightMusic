@@ -146,6 +146,8 @@ createMusicStream(musicSource)
     .on('end', () => {
         fs.writeFileSync('graph.svg', musicGraph.getSVG())
         console.log('end')
+        process.emit("SIGINT");
+
     })
 
     .pipe(new Speaker())
