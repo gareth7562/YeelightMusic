@@ -57,6 +57,12 @@ function updateLights(device) {
             method: 'set_music',
             params: [1, server, 55440]
         });
+
+        device.sendCommand({
+            id: 1337,
+            method: 'set_power',
+            params: ["on", "smooth", 500]
+        });
     });
 
 }
