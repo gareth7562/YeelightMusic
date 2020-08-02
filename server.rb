@@ -14,18 +14,21 @@ end
 @command_socket = TCPServer.new('0.0.0.0', 1337)
 @clientArray = Array.new
 @command = "" 
+@reset = false
+@commander = nil
+
+def resetConnection(index)
 
 
-def resetConnection
-
-@clientArray.each do |client |
-  client.close
-  client = nil
+  @clientArray.each do |client|
+  if(client != @clientArray[index])
+    client.close
+    @clientArray.delete(client)
   end
-  @clientArray.clear
+  @command = ""
 
 end
-
+end
   
 trap "SIGINT" do
   puts "Exiting"
@@ -57,53 +60,51 @@ blue = 255
 green = 65280
 default_color = 0
 puts "New client! #{[index]}"
-
+puts @clientArray
 loop do
 
-  begin
-
+begin
 if (@commander != nil) then
 @command = @commander.gets(100)
-
 end
 rescue Errno::ECONNRESET => e
-
-resetConnection
+  resetConnection(index)
 
 end
 
-
-if (@command != nil) then
-if (@command.strip == "disconnect") then
+begin
+@command = @command.chomp
+rescue NoMethodError => e
+  command = "disconnect"
+end
+if (@command == "disconnect") then
 
   puts "Client disconnected, please reconnect to server"
   @command = ""
-  resetConnection
-
+  resetConnection(index)
 end
 
-if (@command.strip == "default") then
+if (@command == "default") then
 
   sendToClients(set_rgb(default_color, "smooth", 100))
 
 end
 
-if (@command.strip == "r") then
+if (@command == "r") then
 
   sendToClients(set_rgb(red, "smooth", 100))
 
 end
 
-if (@command.strip == "g") then
+if (@command == "g") then
 
   sendToClients(set_rgb(green, "smooth", 100))
 
 end
 
-if (@command.strip == "b") then
+if (@command == "b") then
   sendToClients(set_rgb(blue, "smooth", 100))
 
-end
 end
 end
 end
