@@ -14,7 +14,6 @@ end
 @command_socket = TCPServer.new('0.0.0.0', 1337)
 @clientArray = Array.new
 @command = nil
-@commander = nil
 
 trap "SIGINT" do
     puts "Exiting"
@@ -36,52 +35,68 @@ def handle_connection(index)
         	blue = 255
 	        green = 65280
 	        default_color = 0
-		puts "New client! #{[@clients]}"
-                puts index
+		puts "New client! #{[index]}"
+
+
+                
 		loop do
 
-	                        
-                @command = @commander.gets(10) #first client gets commands
-                
-                if(@command != nil) then 
-		if (@command.chomp  == "default") then
+
+                begin 
+
+                if(@commander != nil) then
+                  @command = @commander.gets(100)
                   
-                @clientArray.each do |client|
-                  client.send(set_rgb(default_color, "smooth", 200), 0)
-		end
-                end
-		if (@command.chomp == "r") then
-
-                @clientArray.each do |client|
-                  client.send(set_rgb(red, "smooth", 200), 0)     
-		end
-                end
-		if (@command.chomp == "g") then
+                end                
+                rescue Errno::ECONNRESET => e
                 
                 @clientArray.each do |client|
-                  client.send(set_rgb(green, "smooth", 200), 0)
-		end
+                   client.close
+                   client = nil
                 end
-		if (@command.chomp == "b") then
+                @clientArray.clear
+                @command = nil
+                
+                end
+		
+		
 
-                @clientArray.each do |client|
-                  client.send(set_rgb(blue, "smooth", 200), 0)
-                end
-                end
+
+                if(@command != nil) then 
+		if (@command.strip == "default") then
+
+
+		  @clientArray.each do |client|
+                  client.send(set_rgb(default_color, "smooth", 100), 0)
 		end
                 end
+		if (@command.strip == "r") then
+
+		  @clientArray.each do |client|
+                  client.send(set_rgb(red, "smooth", 100), 0)     
+		end
+                end
+
+		@clientArray.each do |client|
+		if (@command.strip == "g") then
+                  client.send(set_rgb(green, "smooth", 100), 0)
+		end
                 end
                 
+		@clientArray.each do |client|
+		if (@command.strip == "b") then
+                  client.send(set_rgb(blue, "smooth", 100), 0)
+	        end
+                end
+                end
+		end
+		end
 
 def handle_commander
         
-        
-        loop do
-
-                @commander = @command_socket.accept
-        end
+	@commander = @command_socket.accept
 end
-
+      
 puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
 puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a track via this server"
 
@@ -90,8 +105,9 @@ loop do
 
                 @clientArray.push(@socket.accept)
                 
+		Thread.new {  handle_commander }
 		@t = Thread.new {
-                  handle_connection(@clientArray.size);
+                @t2 =   handle_connection(@clientArray.size);
                 }
 
 end
