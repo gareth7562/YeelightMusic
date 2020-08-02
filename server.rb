@@ -44,13 +44,21 @@ end
 
 def sendToClients(command)
 
-@clientArray.each do |client |
+@clientArray.each do |client|
+    
+    begin
+    if !client.closed? then
     client.send(command, 0)
-
+    end
+rescue Errno::EPIPE
+    client.close
+    @clientArray.delete(client)
+  
+    
   end
+  end
+
 end
-
-
 
 def handle_connection(index)
 
