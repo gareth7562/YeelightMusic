@@ -26,9 +26,10 @@ socket = TCPServer.new('0.0.0.0', PORT)
 
 def resetConnection(addr)
 
-
+    if(@clientHash[addr] != nil) then
     @clientHash[addr].close
     @command = ""
+    end
 
 end
 
@@ -36,16 +37,8 @@ end
 trap "SIGINT" do
   puts "Exiting"
 
-if @t != nil then
-@t.kill
-end
-if @t2 != nil then
-@t2.kill
-end
 exit 130
 end
-
-
 def sendToClient(command)
 
  @iplist.each do |addr| 
@@ -54,19 +47,25 @@ def sendToClient(command)
       @clientHash[addr].send(command, 0)
     end
 rescue Errno::EPIPE
+    puts "#{[Time.now]} Broken connection for #{addr}"
     if @clientHash[addr] != nil then
     @clientHash[addr].close
+    @clientHash[addr] = nil
     num_clients = 0
+    
     end
 rescue Errno::ECONNRESET 
-    if @clientHash[addr] != nil then            
+    puts "#{[Time.now]} Connection reset for #{addr}"         
+    if @clientHash[addr] != nil then
     @clientHash[addr].close
+    @clientHash[addr] = nil   
     end
 rescue IOError
+
+    puts "#{[Time.now]} Error sending data to #{addr}"
     if @clientHash[addr] != nil then            
     @clientHash[addr].close
-    puts "#{[Time.now]} Error sending data to #{addr}"
-    num_clients = 0
+    @clientHash[addr] = nil
     end
 end
     
@@ -89,17 +88,18 @@ transition_effect = "sudden"
 
 loop do
 
-  if @num_clients == 0
+  if @num_clients < 1 
     then 
+    @iplist.clear
     return
   end
 begin
-  if (@commander != nil && @num_clients > 0) then
+  if (@commander != nil) then
 @command = @commander.gets(15)
 end
 rescue Errno::ECONNRESET => e
 
-  puts "#{[Time.now]} Client disconnected. (reset)"
+  puts "#{[Time.now]} Commander connection reset."
   @iplist.each do |addr|                                                                                                  
     resetConnection(addr) 
     return
@@ -145,7 +145,6 @@ end
 def handle_commander
 loop do
 @commander = @command_socket.accept
-#@commander.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 end
 end
 puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
@@ -154,19 +153,18 @@ puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a t
 
   
   
-@t2 = Thread.new {
+Thread.new {
   handle_commander
 }
 
 loop do
 new_client = socket.accept
 
-@t = Thread.new {
+Thread.new {
 
     
   sock_domain, remote_port, remote_hostname, remote_ip = new_client.peeraddr
   puts "#{[Time.now]} Client #{remote_ip} connected"
-  #new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
   new_client.send(set_bright(50, "smooth", 500), 0);
   if(@clientHash[remote_ip] != nil)
   @clientHash[remote_ip].close
