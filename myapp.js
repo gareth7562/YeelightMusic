@@ -33,9 +33,9 @@ for (var i = 0; i < ips.length; i++) {
     device[i].connect();
 
 
-    /*device[i].on('deviceUpdate', (newProps) => {
+    device[i].on('deviceUpdate', (newProps) => {
         console.log(newProps)
-    })*/
+    })
 
 
     updateLights(device[i]);
@@ -61,6 +61,8 @@ function updateLights(device) {
             params: ["on", "smooth", 500]
         });
     });
+
+
 
 }
 
@@ -153,7 +155,7 @@ createMusicStream(musicSource)
 
         disableMusicMode();
         console.log('end')
-
+        client.write("disconnect\r\n")
         process.emit("SIGINT");
 
     })

@@ -7,6 +7,11 @@ cmd = "{\"id\":3,\"method\":\"set_rgb\",\"params\":[#{rgb_value},\"#{effect}\",#
 return cmd
 end
 
+def set_bright(brightness, effect, duration)
+cmd = "{\"id\":5,\"method\":\"set_bright\",\"params\":[#{brightness},\"#{effect}\",#{duration}]}\r\n"
+return cmd
+end
+
 
 def set_power(power, effect, duration)
 cmd = "{\"id\":6,\"method\":\"set_power\",\"params\":[\"#{power}\",\"#{effect}\",#{duration}]}\r\n"
@@ -17,15 +22,15 @@ end
 @clientArray = Array.new
 @command = "" 
 @commander = nil
-@index = 0
 
 def resetConnection
 
-
   @clientArray.each do |client|
+
+    sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
+    puts "#{remote_ip} disconnected"
     client.close
     @clientArray.delete(client)
-    @index = 0;
   end
   @command = ""
 
@@ -44,6 +49,7 @@ end
 exit 130
 end
 
+
 def sendToClients(command)
 
 @clientArray.each do |client|
@@ -55,12 +61,10 @@ def sendToClients(command)
 rescue Errno::EPIPE
     client.close
     @clientArray.delete(client)
-    index = 0
 
 rescue Errno::ECONNRESET 
     client.close
     @clientArray.delete(client)
-    index = 0
     
     
   end
@@ -68,7 +72,8 @@ rescue Errno::ECONNRESET
 
 end
 
-def handle_connection
+
+def handle_connection(client)
 
 red = 16711680
 blue = 255
@@ -77,12 +82,12 @@ prevCommand = nil
 response_time = 0 #ms response from bulb
 transition_effect = "sudden"
 
-default_color = 255 
-loop do
 
+
+loop do
 begin
 if (@commander != nil) then
-@command = @commander.gets(5)
+@command = @commander.gets(15)
 end
 rescue Errno::ECONNRESET => e
   resetConnection
@@ -96,12 +101,9 @@ rescue NoMethodError => e
 end
 if (@command == "disconnect") then
 
-  puts "Client disconnected, please reconnect to server"
   @command = ""
   resetConnection
 end
-
-
 
 
 if (@command == "r" && prevCommand != "r") then
@@ -137,16 +139,16 @@ loop do
 
   new_client = @socket.accept
   sock_domain, remote_port, remote_hostname, remote_ip = new_client.peeraddr
-  puts "New Client #{remote_ip}"  
+  puts "Client #{remote_ip} connected"  
   new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+  new_client.send(set_bright(50, "smooth", 500), 0);
   @clientArray.push(new_client)
 
-Thread.new {
+@t2 = Thread.new {
   handle_commander
 }
 @t = Thread.new {
-  handle_connection;
-  @index = @index + 1;
+  handle_connection(new_client);
 }
 
 end
