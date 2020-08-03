@@ -23,9 +23,7 @@ ips = ["192.168.1.59", "192.168.1.55"];
 device = {};
 var color = 1
 
-
-
-for (var i = 0; i < ips.length + 1; i++) {
+for (var i = 0; i < ips.length; i++) {
 
     device[i] = new YeeDevice({
         host: ips[i],
@@ -67,6 +65,7 @@ function updateLights(device) {
 }
 
 var client = new net.Socket();
+client.setNoDelay(true);
 client.connect(1337, server, function() {
     console.log('Connected');
     client.write('Hello, server!.');
@@ -94,7 +93,7 @@ if (process.platform === "win32") {
 
 process.on("SIGINT", function () {
   //graceful shutdown
-
+  disableMusicMode();
   client.write("disconnect\r\n")
   process.exit();
 
@@ -125,6 +124,17 @@ const musicBeatScheduler = new MusicBeatScheduler(pos => {
       color++;
 });
 
+function disableMusicMode()
+{
+  for (var i = 0; i < ips.length; i++) {
+  device[i].sendCommand({
+      id: 1337,
+      method: 'set_music',
+      params: [0, server, 55440]
+  });
+}
+}
+
 const musicBeatDetector = new MusicBeatDetector({
     plotter: musicGraph.getPlotter(),
     scheduler: musicBeatScheduler.getScheduler(),
@@ -140,7 +150,10 @@ createMusicStream(musicSource)
     })
     .on('end', () => {
         fs.writeFileSync('graph.svg', musicGraph.getSVG())
+
+        disableMusicMode();
         console.log('end')
+
         process.emit("SIGINT");
 
     })

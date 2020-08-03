@@ -6,6 +6,8 @@ def set_rgb(rgb_value, effect, duration)
 cmd = "{\"id\":3,\"method\":\"set_rgb\",\"params\":[#{rgb_value},\"#{effect}\",#{duration}]}\r\n"
 return cmd
 end
+
+
 def set_power(power, effect, duration)
 cmd = "{\"id\":6,\"method\":\"set_power\",\"params\":[\"#{power}\",\"#{effect}\",#{duration}]}\r\n"
 return cmd
@@ -14,7 +16,6 @@ end
 @command_socket = TCPServer.new('0.0.0.0', 1337)
 @clientArray = Array.new
 @command = "" 
-@reset = false
 @commander = nil
 
 
@@ -107,17 +108,16 @@ end
 if (@command == "r" && prevCommand != "r") then
 
   sendToClients(set_rgb(red, transition_effect, response_time))
-
 end
 
 if (@command == "g" && prevCommand != "g") then
 
-  sendToClients(set_rgb(green, transition_effect, response_time))
+ sendToClients(set_rgb(green, transition_effect, response_time))
 
 end
 
 if (@command == "b" && prevCommand != "b") then
-  sendToClients(set_rgb(blue, transition_effect, response_time))
+ sendToClients(set_rgb(blue, transition_effect, response_time))
 
 end
 
