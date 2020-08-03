@@ -1,5 +1,4 @@
 require 'socket'
-require 'thread'
 PORT = 55440
 @clients = []
 def set_rgb(rgb_value, effect, duration)
@@ -30,6 +29,9 @@ def resetConnection(addr)
 
     @clientHash[addr].close
     @command = ""
+    @iplist.delete(addr)
+    @t.kill
+    @t2.kill
 
 end
 
@@ -56,13 +58,16 @@ def sendToClient(command)
     end
 rescue Errno::EPIPE
     @clientHash[addr].close
+    @iplist.delete(addr)
 
 rescue Errno::ECONNRESET 
     @clientHash[addr].close
+   
 rescue IOError
     @clientHash[addr].close
-    puts "Error sending data to #{addr}"
+    puts "#{[Time.now]} Error sending data to #{addr}"
     @iplist.delete(addr)
+
 end
     
 end
@@ -84,13 +89,17 @@ transition_effect = "sudden"
 
 loop do
 begin
-if (@commander != nil) then
+  if (@commander != nil && @iplist.length > 0) then
 @command = @commander.gets(15)
+else
+  break
 end
 rescue Errno::ECONNRESET => e
 
-  puts "Client disconnected. (reset)"
-  @iplist.each do |addr|                                                                                                  resetConnection(addr)                                                                                                   end           
+  puts "#{[Time.now]} Client disconnected. (reset)"
+  @iplist.each do |addr|                                                                                                  
+    resetConnection(addr)                                                                                                   
+  end           
 end
 
 begin
@@ -101,7 +110,7 @@ end
 if (@command == "disconnect") then
 
   @command = ""
-  puts "Client disconnected normally"
+  puts "#{[Time.now]} Client disconnected normally"
   @iplist.each do |addr|
   resetConnection(addr)
   end
@@ -130,29 +139,30 @@ end
 end
 
 def handle_commander
-
+loop do
 @commander = @command_socket.accept
-@commander.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+#@commander.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 end
-
+end
 puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
 puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a track via this server"
 
-loop do
 
   
-  new_client = socket.accept
   
 @t2 = Thread.new {
   handle_commander
 }
+
+loop do
+new_client = socket.accept
+
 @t = Thread.new {
 
-  
-
+    
   sock_domain, remote_port, remote_hostname, remote_ip = new_client.peeraddr
-  puts "Client #{remote_ip} connected"
-  new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+  puts "#{[Time.now]} Client #{remote_ip} connected"
+  #new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
   new_client.send(set_bright(50, "smooth", 500), 0);
   if(@clientHash[remote_ip] != nil)
   @clientHash[remote_ip].close
@@ -165,5 +175,3 @@ loop do
 }
 
 end
-
-
