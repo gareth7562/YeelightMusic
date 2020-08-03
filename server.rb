@@ -17,22 +17,19 @@ def set_power(power, effect, duration)
 cmd = "{\"id\":6,\"method\":\"set_power\",\"params\":[\"#{power}\",\"#{effect}\",#{duration}]}\r\n"
 return cmd
 end
-@socket = TCPServer.new('0.0.0.0', PORT)
+socket = TCPServer.new('0.0.0.0', PORT)
 @command_socket = TCPServer.new('0.0.0.0', 1337)
-@clientArray = Array.new
+@clientHash = Hash.new
 @command = "" 
 @commander = nil
+@num_clients = 0
+@iplist = Array.new
 
-def resetConnection
+def resetConnection(addr)
 
-  @clientArray.each do |client|
 
-    sock_domain, remote_port, remote_hostname, remote_ip = client.peeraddr
-    puts "#{remote_ip} disconnected"
-    client.close
-    @clientArray.delete(client)
-  end
-  @command = ""
+    @clientHash[addr].close
+    @command = ""
 
 end
 
@@ -50,30 +47,32 @@ exit 130
 end
 
 
-def sendToClients(command)
+def sendToClient(command)
 
-@clientArray.each do |client|
-    
+ @iplist.each do |addr| 
     begin
-    if !client.closed? then
-    client.send(command, 0)
+      if @clientHash[addr] != nil then
+      @clientHash[addr].send(command, 0)
     end
 rescue Errno::EPIPE
-    client.close
-    @clientArray.delete(client)
+    @clientHash[addr].close
 
 rescue Errno::ECONNRESET 
-    client.close
-    @clientArray.delete(client)
+    @clientHash[addr].close
+rescue IOError
+    @clientHash[addr].close
+    puts "Error sending data to #{addr}"
+    @iplist.delete(addr)
+end
     
-    
-  end
-  end
+end
 
 end
 
 
-def handle_connection(client)
+
+
+def handle_connection(ip)
 
 red = 16711680
 blue = 255
@@ -83,15 +82,15 @@ response_time = 0 #ms response from bulb
 transition_effect = "sudden"
 
 
-
 loop do
 begin
 if (@commander != nil) then
 @command = @commander.gets(15)
 end
 rescue Errno::ECONNRESET => e
-  resetConnection
 
+  puts "Client disconnected. (reset)"
+  @iplist.each do |addr|                                                                                                  resetConnection(addr)                                                                                                   end           
 end
 
 begin
@@ -102,23 +101,27 @@ end
 if (@command == "disconnect") then
 
   @command = ""
-  resetConnection
+  puts "Client disconnected normally"
+  @iplist.each do |addr|
+  resetConnection(addr)
+  end
 end
+
 
 
 if (@command == "r" && prevCommand != "r") then
 
-  sendToClients(set_rgb(red, transition_effect, response_time))
+  sendToClient(set_rgb(red, transition_effect, response_time))
 end
 
 if (@command == "g" && prevCommand != "g") then
 
- sendToClients(set_rgb(green, transition_effect, response_time))
+ sendToClient(set_rgb(green, transition_effect, response_time))
 
 end
 
 if (@command == "b" && prevCommand != "b") then
- sendToClients(set_rgb(blue, transition_effect, response_time))
+ sendToClient(set_rgb(blue, transition_effect, response_time))
 
 end
 
@@ -137,18 +140,28 @@ puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a t
 
 loop do
 
-  new_client = @socket.accept
-  sock_domain, remote_port, remote_hostname, remote_ip = new_client.peeraddr
-  puts "Client #{remote_ip} connected"  
-  new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-  new_client.send(set_bright(50, "smooth", 500), 0);
-  @clientArray.push(new_client)
-
+  
+  new_client = socket.accept
+  
 @t2 = Thread.new {
   handle_commander
 }
 @t = Thread.new {
-  handle_connection(new_client);
+
+  
+
+  sock_domain, remote_port, remote_hostname, remote_ip = new_client.peeraddr
+  puts "Client #{remote_ip} connected"
+  new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+  new_client.send(set_bright(50, "smooth", 500), 0);
+  if(@clientHash[remote_ip] != nil)
+  @clientHash[remote_ip].close
+  @iplist.delete(remote_ip)
+  end
+  @clientHash[remote_ip] = new_client
+  @num_clients = @num_clients + 1;
+  @iplist.push(remote_ip)
+  handle_connection(remote_ip);
 }
 
 end
