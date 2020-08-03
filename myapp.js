@@ -118,10 +118,10 @@ const musicBeatScheduler = new MusicBeatScheduler(pos => {
             break;
 
         default:
+    }
 
+    color++;
 
-  }
-      color++;
 });
 
 function disableMusicMode()

@@ -17,20 +17,20 @@ end
 @clientArray = Array.new
 @command = "" 
 @commander = nil
+@index = 0
 
-
-def resetConnection(index)
+def resetConnection
 
 
   @clientArray.each do |client|
-  if(client != @clientArray[index])
     client.close
     @clientArray.delete(client)
+    @index = 0;
   end
   @command = ""
 
 end
-end
+
   
 trap "SIGINT" do
   puts "Exiting"
@@ -55,21 +55,20 @@ def sendToClients(command)
 rescue Errno::EPIPE
     client.close
     @clientArray.delete(client)
+    index = 0
 
 rescue Errno::ECONNRESET 
     client.close
     @clientArray.delete(client)
+    index = 0
     
     
   end
-    if !client.closed? then
-    client.send(command, 0)
-    end
   end
 
 end
 
-def handle_connection(index)
+def handle_connection
 
 red = 16711680
 blue = 255
@@ -86,7 +85,7 @@ if (@commander != nil) then
 @command = @commander.gets(5)
 end
 rescue Errno::ECONNRESET => e
-  resetConnection(index)
+  resetConnection
 
 end
 
@@ -99,7 +98,7 @@ if (@command == "disconnect") then
 
   puts "Client disconnected, please reconnect to server"
   @command = ""
-  resetConnection(index)
+  resetConnection
 end
 
 
@@ -146,11 +145,8 @@ Thread.new {
   handle_commander
 }
 @t = Thread.new {
-  index = 0
-  if @clientArray.size > 0 then
-    index = @clientArray.size - 1
-  end
-  handle_connection(index);
+  handle_connection;
+  @index = @index + 1;
 }
 
 end
