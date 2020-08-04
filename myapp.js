@@ -1,4 +1,3 @@
-const fs = require('fs')
 const YeeDevice = require('yeelight-platform').Device
 const Speaker = require('speaker')
 const createMusicStream = require('create-music-stream') //read this https://github.com/chrvadala/create-music-stream#faq
@@ -7,15 +6,12 @@ const {
     MusicBeatScheduler,
     MusicGraph
 } = require('music-beat-detector')
-const getMP3Duration = require('get-mp3-duration');
 var net = require('net');
 
 
 const musicSource = process.argv[3] //get the first argument on cli
 var trackLength = 0;
 var peaks = 0;
-const buffer = fs.readFileSync(musicSource);
-const duration = getMP3Duration(buffer);
 
 server = process.argv[2];
 ips = ["192.168.1.59", "192.168.1.55"];
