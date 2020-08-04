@@ -29,6 +29,7 @@ def resetConnection(addr)
 
     if(@clientHash[addr] != nil) then
     @clientHash[addr].close
+    @clientHash[addr] = nil
     @command = ""
     end
 
@@ -98,7 +99,7 @@ transition_effect = "sudden"
 
 loop do
 
-  if @num_clients < 1 
+  if @num_clients == 0  
     then 
     @iplist.clear
     return
@@ -125,11 +126,12 @@ end
 if (@command == "disconnect") then
 
   @command = ""
-  @num_clients = 0 
   puts "#{[Time.now]} Client disconnected normally"
   @iplist.each do |addr|
   resetConnection(addr)
   end
+  @iplist.clear
+  num_clients = 0
 end
 
 

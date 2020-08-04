@@ -92,7 +92,7 @@ if (process.platform === "win32") {
 process.on("SIGINT", function () {
   //graceful shutdown
   disableMusicMode();
-  client.write("disconnect\r\n")
+  client.destroy()
   process.exit();
 
 });
@@ -151,6 +151,7 @@ createMusicStream(musicSource)
         disableMusicMode();
         console.log('end')
         client.write("disconnect\r\n")
+	client.destroy()
         process.emit("SIGINT");
 
     })
