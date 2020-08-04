@@ -32,6 +32,5 @@ These are
 * speaker
 * create-music-stream
 * music-beat-detector
-* get-mp3-duration - this isnt used yet
 
 If you downloaded previous revisions then there might be issues with network disconnections and reconnections. This has been solved in latest code
