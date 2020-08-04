@@ -58,15 +58,28 @@ rescue Errno::EPIPE
     @clientHash[addr].close
     @clientHash[addr] = nil
     @num_clients = @num_clients - 1
+    
+    
+    if(@iplist.include? addr)
+    @iplist.delete(addr)
+    end
+
     printConnectedDevices
     
     end
-rescue Errno::ECONNRESET 
-    puts "#{[Time.now]} Connection reset for #{addr}"         
+rescue Errno::ECONNRESET => e 
+    puts "#{[Time.now]} Connection reset for #{addr} #{e}"         
     if @clientHash[addr] != nil then
     @clientHash[addr].close
     @clientHash[addr] = nil
     @num_clients = @num_clients - 1
+    
+
+    if(@iplist.include? addr)
+    @iplist.delete(addr)
+    end
+
+
     printConnectedDevices
     end
 rescue IOError
@@ -76,6 +89,10 @@ rescue IOError
     @clientHash[addr].close
     @clientHash[addr] = nil
     @num_clients = @num_clients - 1
+
+    if(@iplist.include? addr)
+    @iplist.delete(addr)
+    end
     printConnectedDevices
     end
 end

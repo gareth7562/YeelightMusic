@@ -12,6 +12,7 @@ var net = require('net');
 const musicSource = process.argv[3] //get the first argument on cli
 var trackLength = 0;
 var peaks = 0;
+var connected = false;
 
 server = process.argv[2];
 ips = ["192.168.1.59", "192.168.1.55"];
@@ -45,6 +46,7 @@ function updateLights(device) {
             method: 'set_music',
             params: [0, server, 55440]
         });
+
         device.sendCommand({
             id: 1337,
             method: 'set_music',
@@ -56,9 +58,15 @@ function updateLights(device) {
             method: 'set_power',
             params: ["on", "smooth", 500]
         });
+
+        connected = true;
+
     });
 
 
+        device.on('disconnected', () => {
+          connected = false;
+        });
 
 }
 
@@ -103,6 +111,8 @@ const musicGraph = new MusicGraph()
 const musicBeatScheduler = new MusicBeatScheduler(pos => {
     //console.log(`peak at ${pos}ms`) // your music effect goes here
 
+if(connected)
+{
     if (color > 2) {
         color = 1;
     }
@@ -120,7 +130,10 @@ const musicBeatScheduler = new MusicBeatScheduler(pos => {
 
     color++;
 
+}
+
 });
+
 
 function disableMusicMode()
 {
