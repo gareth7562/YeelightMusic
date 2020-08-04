@@ -29,9 +29,9 @@ for (var i = 0; i < ips.length; i++) {
     device[i].connect();
 
 
-    device[i].on('deviceUpdate', (newProps) => {
+/*    device[i].on('deviceUpdate', (newProps) => {
         console.log(newProps)
-    })
+    }) */
 
 
     updateLights(device[i]);
@@ -147,7 +147,6 @@ createMusicStream(musicSource)
         //console.log(`peak-detected at ${pos}ms, detected bpm ${bpm}`)
     })
     .on('end', () => {
-        fs.writeFileSync('graph.svg', musicGraph.getSVG())
 
         disableMusicMode();
         console.log('end')
