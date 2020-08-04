@@ -13,7 +13,7 @@ Then play tracks on any device via the server ip i.e.
 
 Also works with youtube urls i.e. 
 
-*node myapp.js 192.168.1.56 <youtube url>
+*node myapp.js 192.168.1.56 <youtube url>*
   
 replace IP with your own server IP
 I had issues with running the server on localhost if that doesnt work, try using a seperate computer on the same network to run the server.
