@@ -10,6 +10,10 @@ Run server with:
 Then play tracks on any device via the server ip i.e.
 
 *node myapp.js 192.168.1.56 "tracks/chill.mp3"*
+
+Also works with youtube urls i.e. 
+
+*node myapp.js 192.168.1.56 \<youtube url>*
   
 replace IP with your own server IP
 I had issues with running the server on localhost if that doesnt work, try using a seperate computer on the same network to run the server.
@@ -28,6 +32,5 @@ These are
 * speaker
 * create-music-stream
 * music-beat-detector
-* get-mp3-duration - this isnt used yet
 
 If you downloaded previous revisions then there might be issues with network disconnections and reconnections. This has been solved in latest code
