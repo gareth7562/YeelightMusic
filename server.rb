@@ -1,6 +1,7 @@
 require 'socket'
 PORT = 55440
-@clients = []
+
+
 def set_rgb(rgb_value, effect, duration)
 cmd = "{\"id\":3,\"method\":\"set_rgb\",\"params\":[#{rgb_value},\"#{effect}\",#{duration}]}\r\n"
 return cmd
@@ -33,6 +34,10 @@ def resetConnection(addr)
 
 end
 
+def printConnectedDevices 
+  
+  puts "#{@num_clients} devices connected."
+end
   
 trap "SIGINT" do
   puts "Exiting"
@@ -51,14 +56,17 @@ rescue Errno::EPIPE
     if @clientHash[addr] != nil then
     @clientHash[addr].close
     @clientHash[addr] = nil
-    num_clients = 0
+    @num_clients = @num_clients - 1
+    printConnectedDevices
     
     end
 rescue Errno::ECONNRESET 
     puts "#{[Time.now]} Connection reset for #{addr}"         
     if @clientHash[addr] != nil then
     @clientHash[addr].close
-    @clientHash[addr] = nil   
+    @clientHash[addr] = nil
+    @num_clients = @num_clients - 1
+    printConnectedDevices
     end
 rescue IOError
 
@@ -66,6 +74,8 @@ rescue IOError
     if @clientHash[addr] != nil then            
     @clientHash[addr].close
     @clientHash[addr] = nil
+    @num_clients = @num_clients - 1
+    printConnectedDevices
     end
 end
     
@@ -100,6 +110,7 @@ end
 rescue Errno::ECONNRESET => e
 
   puts "#{[Time.now]} Commander connection reset."
+  printConnectedDevices
   @iplist.each do |addr|                                                                                                  
     resetConnection(addr) 
     return
@@ -170,10 +181,12 @@ Thread.new {
   @clientHash[remote_ip].close
   end
   @clientHash[remote_ip] = new_client
-  @num_clients = @num_clients + 1
   if !@iplist.include? remote_ip
   @iplist.push(remote_ip)
   end
+
+  @num_clients = @iplist.length
+  printConnectedDevices 
   handle_connection(remote_ip);
 }
 
