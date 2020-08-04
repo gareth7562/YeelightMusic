@@ -49,7 +49,7 @@ def sendToClient(command)
 
  @iplist.each do |addr| 
     begin
-      if @clientHash[addr] != nil then
+      if@clientHash[addr] != nil and !@clientHash[addr].closed? then
       @clientHash[addr].send(command, 0)
     end
 rescue Errno::EPIPE
@@ -152,20 +152,10 @@ if (@command == "disconnect") then
 end
 
 
-if (@command == "r" && prevCommand != "r") then
+if @command != nil and @command.start_with? "c" then
+  tokens = @command.split(" ")
 
-  sendToClient(set_rgb(red, transition_effect, response_time))
-end
-
-if (@command == "g" && prevCommand != "g") then
-
- sendToClient(set_rgb(green, transition_effect, response_time))
-
-end
-
-if (@command == "b" && prevCommand != "b") then
- sendToClient(set_rgb(blue, transition_effect, response_time))
-
+  sendToClient(set_rgb(tokens[1], transition_effect, response_time))
 end
 
   prevCommand = @command

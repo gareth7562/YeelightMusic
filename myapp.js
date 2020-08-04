@@ -1,5 +1,8 @@
 const YeeDevice = require('yeelight-platform').Device
 const Speaker = require('speaker')
+var Color = require('color')
+
+var fs = require('fs');
 const createMusicStream = require('create-music-stream') //read this https://github.com/chrvadala/create-music-stream#faq
 const {
     MusicBeatDetector,
@@ -13,12 +16,29 @@ const musicSource = process.argv[3] //get the first argument on cli
 var trackLength = 0;
 var peaks = 0;
 var connected = false;
+var color1 = 0;
+var color2 = 0;
+
+fs.readFile('config.txt', 'utf8', function(err, contents) {
+    var colors = contents.split("\n");
+
+    var clr1 = Color(colors[0]);
+    var clr2 = Color(colors[1]);
+
+    color1 = clr1.rgbNumber();
+    color2 = clr2.rgbNumber();
+
+
+
+});
+
+
 
 server = process.argv[2];
 ips = ["192.168.1.59", "192.168.1.55"];
 
 device = {};
-var color = 1
+var color = 1;
 
 for (var i = 0; i < ips.length; i++) {
 
@@ -118,11 +138,11 @@ if(connected)
     }
     switch (color) {
         case 1:
-            client.write("r\r\n")
+            client.write("c " + color1 + "\r\n");
             break;
 
         case 2:
-            client.write("g\r\n")
+            client.write("c " + color2 + "\r\n");
             break;
 
         default:
