@@ -32,5 +32,8 @@ These are
 * speaker
 * create-music-stream
 * music-beat-detector
+* color
+
+you can now specify custom colors in config.txt in css style, defaults set to blue and red to test it. Only supports 2 different colors
 
 If you downloaded previous revisions then there might be issues with network disconnections and reconnections. This has been solved in latest code
