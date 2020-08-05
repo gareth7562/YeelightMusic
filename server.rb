@@ -24,6 +24,7 @@ socket = TCPServer.new('0.0.0.0', PORT)
 @commander = nil
 @num_clients = 0
 @iplist = Array.new
+
 def resetConnection(addr)
     puts "[#{Time.now}] Client #{addr} disconnected."
     if(@clientHash[addr] != nil) then
@@ -105,7 +106,7 @@ end
 
 
 
-def handle_connection
+def handle_connection(ip)
 
 red = 16711680
 blue = 255
@@ -113,8 +114,6 @@ green = 65280
 prevCommand = nil
 response_time = 0 #ms response from bulb
 transition_effect = "sudden"
-
-puts "#{@thread} handling commands"
 
 
 loop do
@@ -166,7 +165,9 @@ end
 end
 
 def handle_commander
+loop do
 @commander = @command_socket.accept
+end
 end
 puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
 puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a track via this server"
@@ -178,15 +179,13 @@ Thread.new {
   handle_commander
 }
 
-@thread = 0;
 loop do
 new_client = socket.accept
-
 
 Thread.new {
 
     
-  sock_domain, remote_port, remote_hostname, remote_ip = new_client.peeraddr(false)
+  sock_domain, remote_port, remote_hostname, remote_ip = new_client.peeraddr
   puts "#{[Time.now]} Client #{remote_ip} connected"
   new_client.send(set_bright(50, "smooth", 500), 0);
   if(@clientHash[remote_ip] != nil)
@@ -199,12 +198,7 @@ Thread.new {
 
   @num_clients = @iplist.length
   printConnectedDevices 
-      
-  if @thread == 0 then
-  handle_connection
-  @thread = @thread + 1
-  end
-
+  handle_connection(remote_ip);
 }
 
 end
