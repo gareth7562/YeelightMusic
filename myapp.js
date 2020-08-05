@@ -118,6 +118,10 @@ client.on('close', function() {
     console.log('Connection closed');
 });
 
+client.on('error', function(err) {
+    client.destroy();
+});
+
 
 if (process.platform === "win32") {
   var rl = require("readline").createInterface({
