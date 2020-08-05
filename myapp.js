@@ -15,7 +15,7 @@ var net = require('net');
 const musicSource = process.argv[3] //get the first argument on cli
 var trackLength = 0;
 var peaks = 0;
-var connected = false;
+var connected = new Array();
 var color1 = 0;
 var color2 = 0;
 
@@ -50,16 +50,17 @@ for (var i = 0; i < ips.length; i++) {
     device[i].connect();
 
 
+
 /*    device[i].on('deviceUpdate', (newProps) => {
         console.log(newProps)
     }) */
 
 
-    updateLights(device[i]);
+    updateLights(device[i], i);
 
 }
 
-function updateLights(device) {
+function updateLights(device, i) {
     device.on('connected', () => {
         device.sendCommand({
             id: 1337,
@@ -79,19 +80,31 @@ function updateLights(device) {
             params: ["on", "smooth", 500]
         });
 
-        connected = true;
+        connected[i] = true;
 
     });
 
 
         device.on('disconnected', () => {
-          connected = false;
+          connected[i] = false;
         });
 
 }
 
+function returnDevicesConnected()
+{
+  let count = 0;
+  for(var i = 0; i < connected.length; i++)
+  {
+    if(connected[i] == true)
+    {
+      count++;
+    }
+  }
+  return count;
+}
+
 var client = new net.Socket();
-client.setNoDelay(true);
 client.connect(1337, server, function() {
     console.log('Connected');
     client.write('Hello, server!.');
@@ -119,9 +132,10 @@ if (process.platform === "win32") {
 
 process.on("SIGINT", function () {
   //graceful shutdown
+  client.write("disconnect\r\n");
   disableMusicMode();
-  client.destroy()
   process.exit();
+
 
 });
 
@@ -131,7 +145,7 @@ const musicGraph = new MusicGraph()
 const musicBeatScheduler = new MusicBeatScheduler(pos => {
     //console.log(`peak at ${pos}ms`) // your music effect goes here
 
-if(connected)
+if(returnDevicesConnected() > 0)
 {
     if (color > 2) {
         color = 1;
@@ -180,12 +194,9 @@ createMusicStream(musicSource)
         //console.log(`peak-detected at ${pos}ms, detected bpm ${bpm}`)
     })
     .on('end', () => {
-
         disableMusicMode();
-        console.log('end')
-        client.write("disconnect\r\n")
-	client.destroy()
         process.emit("SIGINT");
+        console.log('end');
 
     })
 

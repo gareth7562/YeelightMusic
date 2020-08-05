@@ -26,11 +26,13 @@ socket = TCPServer.new('0.0.0.0', PORT)
 @iplist = Array.new
 
 def resetConnection(addr)
-
+    puts "[#{Time.now}] Client #{addr} disconnected."
     if(@clientHash[addr] != nil) then
     @clientHash[addr].close
     @clientHash[addr] = nil
     @command = ""
+    @num_clients = @num_clients - 1
+    printConnectedDevices
     end
 
 end
