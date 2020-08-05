@@ -114,7 +114,7 @@ prevCommand = nil
 response_time = 0 #ms response from bulb
 transition_effect = "sudden"
 
-puts "Thread #{@thread} handling commands"
+puts "#{@thread} handling commands"
 
 
 loop do
@@ -178,7 +178,7 @@ Thread.new {
   handle_commander
 }
 
-@thread = -1;
+@thread = 0;
 loop do
 new_client = socket.accept
 
@@ -200,10 +200,9 @@ Thread.new {
   @num_clients = @iplist.length
   printConnectedDevices 
       
-  if @thread == -1 then
-
-  @thread = @thread + 1
+  if @thread == 0 then
   handle_connection
+  @thread = @thread + 1
   end
 
 }
