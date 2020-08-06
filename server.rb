@@ -26,8 +26,8 @@ socket = TCPServer.new('0.0.0.0', PORT)
 @num_clients = 0
 @threads = Array.new
 @new_client_list = Array.new
-$commander_connections = 0
 
+@logged_in = false
 
 def resetConnection(addr)
     puts "[#{Time.now}] Client #{addr} disconnected."
@@ -89,18 +89,18 @@ loop do
   if @new_client_list.count == 0  
     then 
     @clientHash.clear
+    commander = nil
     return
   end
 begin
 
-  if (@commander != nil) then
+  if (@commander != nil and @logged_in) then
 @command = @commander.gets(15)
 end
 rescue Errno::ECONNRESET => e
 
   puts "#{[Time.now]} Commander connection reset."
   printConnectedDevices
-  $commander_connections = 0
   @new_client_list.each do |addr|
     resetConnection(addr) 
     return
@@ -115,7 +115,6 @@ end
 if (@command == "disconnect") then
 
   @command = ""
-  $commander_connections = 0
   puts "#{[Time.now]} Client disconnected normally"
   @clientHash.each do |addr, key|
   resetConnection(addr)
@@ -130,17 +129,26 @@ if @command != nil and @command.start_with? "c" then
   sendToClient(set_rgb(tokens[1], transition_effect, response_time))
 end
 
-  prevCommand = @command
 end
 end
+
 
 def handle_commander
+   Thread.new {
 
-if $commander_connections == 0
-@commander = @command_socket.accept
+
+        login_socket = @command_socket.accept
+        if login_socket != nil then
+        if login_socket.gets(16).chomp == 'connect_string' then
+        @logged_in = true
+        @commander = login_socket
+        end
+        else p "Invalid Client Connected to command socket"
+        end
+}
+
 end
-$commander_connections = $commander_connections + 1
-end
+
 puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
 puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a track via this server"
 
@@ -153,10 +161,9 @@ num = 0
   loop do
   new_client = socket.accept
 @threads <<  Thread.new(new_client) do |n|
-     handle_commander
      sock_domain, remote_port, remote_hostname, remote_ip = n.peeraddr(false)
 
-  
+  handle_commander  
   puts "#{[Time.now]} Client #{remote_ip} connected"
   n.send(set_bright(50, "smooth", 500), 0);
   if @clientHash[remote_ip] != nil and !@clientHash[remote_ip].closed? then

@@ -107,7 +107,7 @@ function returnDevicesConnected()
 var client = new net.Socket();
 client.connect(1337, server, function() {
     console.log('Connected');
-    client.write('Hello, server!.');
+    client.write('connect_string\r\n');
 });
 
 client.on('data', function(data) {
