@@ -34,4 +34,4 @@ These are
 * music-beat-detector
 * color
 
-you can now specify custom colors in config.txt in css style, defaults set to blue and red to test it. Only supports 2 different colors
+you can now specify custom colors in config.txt in css style, defaults set to blue and green. Only supports 2 different colors
