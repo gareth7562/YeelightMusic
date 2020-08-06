@@ -9,7 +9,7 @@ Run server with:
 
 Then play tracks on any device via the server ip i.e.
 
-*node myapp.js 192.168.1.56 "tracks/chill.mp3"*
+*node myapp.js 192.168.1.56 "tracks/drums.mp3"*
 
 Also works with youtube urls i.e. 
 
