@@ -101,6 +101,7 @@ rescue Errno::ECONNRESET => e
 
   puts "#{[Time.now]} Commander connection reset."
   printConnectedDevices
+  @logged_in = false
   @new_client_list.each do |addr|
     resetConnection(addr) 
     return
@@ -138,12 +139,12 @@ def handle_commander
 
 
         login_socket = @command_socket.accept
-        if login_socket != nil then
-        if login_socket.gets(16).chomp == 'connect_string' then
+        if @logged_in == false then
+          if login_socket.gets(16).chomp == 'connect_string' then
         @logged_in = true
         @commander = login_socket
+          else p "Invalid Client Connected to command socket"
         end
-        else p "Invalid Client Connected to command socket"
         end
 }
 
