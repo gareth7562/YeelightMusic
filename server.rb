@@ -59,7 +59,9 @@ def sendToClient(command)
     begin
       @new_client_list.dup.each do |addr|
         if @clientHash[addr] != nil and !@clientHash[addr].closed? then
-      @clientHash[addr].send(command, 0)
+
+      @clientHash[addr].write(command)
+
   end      
 rescue Errno::EPIPE
     puts "#{[Time.now]} Broken connection for #{addr}"
@@ -93,6 +95,7 @@ begin
 
   if (@commander != nil and @logged_in) then
 @command = @commander.gets(15)
+sleep(0.0001)
 end
 rescue Errno::ECONNRESET => e
 
@@ -157,7 +160,8 @@ new_client = nil
   
   loop do
   new_client = socket.accept
-@threads <<  Thread.new(new_client) do |n|
+  new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+@threads <<  Thread.new(new_client) { |n| 
      sock_domain, remote_port, remote_hostname, remote_ip = n.peeraddr(false)
 
   puts "#{[Time.now]} Client #{remote_ip} connected"
@@ -174,7 +178,7 @@ new_client = nil
 
   handle_commander  
   handle_connection
-  end 
-  end
+}
 
 
+end
