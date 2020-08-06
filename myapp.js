@@ -200,6 +200,7 @@ createMusicStream(musicSource)
     .on('end', () => {
         disableMusicMode();
         process.emit("SIGINT");
+        process.exit();
         console.log('end');
 
     })
