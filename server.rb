@@ -24,19 +24,20 @@ socket = TCPServer.new('0.0.0.0', PORT)
 @command = "" 
 @commander = nil
 @num_clients = 0
-@iplist = Array.new
 @threads = Array.new
-
+@new_client_list = Array.new
 $commander_connections = 0
 
 
 def resetConnection(addr)
     puts "[#{Time.now}] Client #{addr} disconnected."
-    if(@clientHash[addr] != nil) then
+    if(@clientHash[addr] != nil and !@clientHash[addr].closed?) then
     @clientHash[addr].close
     @clientHash[addr] = nil
+    @clientHash.delete_if { |k, v| v == nil }
     @command = ""
-    @num_clients = @num_clients - 1
+    @new_client_list.delete(addr)
+    @new_client_list.compact
     printConnectedDevices
     end
 
@@ -44,7 +45,7 @@ end
 
 def printConnectedDevices 
   
-  puts "#{@num_clients} devices connected."
+  puts "#{@new_client_list.count} devices connected."
 end
   
 trap "SIGINT" do
@@ -54,71 +55,40 @@ exit 130
 end
 def sendToClient(command)
     begin
-      @iplist.each do |addr|
-      if !@clientHash[addr] != nil and !@clientHash[addr].closed? then
+      @new_client_list.dup.each do |addr|
+        if @clientHash[addr] != nil and !@clientHash[addr].closed? then
       @clientHash[addr].send(command, 0)
-      end
+  end      
 rescue Errno::EPIPE
     puts "#{[Time.now]} Broken connection for #{addr}"
-    if @clientHash[addr] != nil then
-    @clientHash[addr].close
-    @clientHash[addr] = nil
-    @num_clients = @num_clients - 1
-    
-    
-    if(@iplist.include? addr)
-    @iplist.delete(addr)
-    end
-
-    printConnectedDevices
-    
-    end
+    if(addr != nil)
+    resetConnection(addr) 
+   end
 rescue Errno::ECONNRESET => e 
+    if(addr != nil)
+    resetConnection(addr)
     puts "#{[Time.now]} Connection reset for #{addr} #{e}"         
-    if @clientHash[addr] != nil then
-    @clientHash[addr].close
-    @clientHash[addr] = nil
-    @num_clients = @num_clients - 1
-    
-
-    if(@iplist.include? addr)
-    @iplist.delete(addr)
-    end
-
-
-    printConnectedDevices
     end
 rescue IOError
-
+    if(addr != nil)
+    resetConnection(addr)
     puts "#{[Time.now]} Error sending data to #{addr}"
-    if @clientHash[addr] != nil then            
-    @clientHash[addr].close
-    @clientHash[addr] = nil
-    @num_clients = @num_clients - 1
-
-    if(@iplist.include? addr)
-    @iplist.delete(addr)
-    end
-    printConnectedDevices
     end
 end
-end   
+end
 end
 
 
-
-
-
-def handle_connection(remote_ip)
+def handle_connection
 
 prevCommand = nil
 response_time = 0 #ms response from bulb
 transition_effect = "sudden"
 loop do
 
-  if @num_clients == 0  
+  if @new_client_list.count == 0  
     then 
-    @iplist.clear
+    @clientHash.clear
     return
   end
 begin
@@ -131,7 +101,7 @@ rescue Errno::ECONNRESET => e
   puts "#{[Time.now]} Commander connection reset."
   printConnectedDevices
   $commander_connections = 0
-  @iplist.each do |addr|                                                                                                  
+  @new_client_list.each do |addr|
     resetConnection(addr) 
     return
   end           
@@ -147,10 +117,9 @@ if (@command == "disconnect") then
   @command = ""
   $commander_connections = 0
   puts "#{[Time.now]} Client disconnected normally"
-  @iplist.each do |addr|
+  @clientHash.each do |addr, key|
   resetConnection(addr)
   end
-  @iplist.clear
   num_clients = 0
 end
 
@@ -166,13 +135,11 @@ end
 end
 
 def handle_commander
-loop do
 
 if $commander_connections == 0
 @commander = @command_socket.accept
+end
 $commander_connections = $commander_connections + 1
-end
-end
 end
 puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
 puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a track via this server"
@@ -180,30 +147,29 @@ puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a t
 
   
   
-Thread.new {
-  handle_commander
-}
 new_client = nil
 num = 0
   
   loop do
   new_client = socket.accept
 @threads <<  Thread.new(new_client) do |n|
+     handle_commander
      sock_domain, remote_port, remote_hostname, remote_ip = n.peeraddr(false)
 
   
   puts "#{[Time.now]} Client #{remote_ip} connected"
   n.send(set_bright(50, "smooth", 500), 0);
-  if(@clientHash[remote_ip] != nil)
+  if @clientHash[remote_ip] != nil and !@clientHash[remote_ip].closed? then
+  @new_client_list.delete(remote_ip) 
   @clientHash[remote_ip].close
   end
+  
   @clientHash[remote_ip] = n
-  if !@iplist.include? remote_ip
-  @iplist.push(remote_ip)
-  end
-
-  @num_clients = @iplist.length
+  @new_client_list.push(remote_ip)
+  @num_clients = @new_client_list.count
   printConnectedDevices
-  handle_connection(remote_ip)
+  handle_connection
   end 
   end
+
+
