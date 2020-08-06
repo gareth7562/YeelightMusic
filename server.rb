@@ -30,6 +30,8 @@ socket = TCPServer.new('0.0.0.0', PORT)
 @logged_in = false
 
 def resetConnection(addr)
+
+    if addr != nil then
     puts "[#{Time.now}] Client #{addr} disconnected."
     if(@clientHash[addr] != nil and !@clientHash[addr].closed?) then
     @clientHash[addr].close
@@ -40,7 +42,7 @@ def resetConnection(addr)
     @new_client_list.compact
     printConnectedDevices
     end
-
+    end
 end
 
 def printConnectedDevices 
@@ -61,19 +63,14 @@ def sendToClient(command)
   end      
 rescue Errno::EPIPE
     puts "#{[Time.now]} Broken connection for #{addr}"
-    if(addr != nil)
     resetConnection(addr) 
-   end
 rescue Errno::ECONNRESET => e 
-    if(addr != nil)
     resetConnection(addr)
     puts "#{[Time.now]} Connection reset for #{addr} #{e}"         
-    end
 rescue IOError
-    if(addr != nil)
     resetConnection(addr)
     puts "#{[Time.now]} Error sending data to #{addr}"
-    end
+
 end
 end
 end
@@ -157,14 +154,12 @@ puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a t
   
   
 new_client = nil
-num = 0
   
   loop do
   new_client = socket.accept
 @threads <<  Thread.new(new_client) do |n|
      sock_domain, remote_port, remote_hostname, remote_ip = n.peeraddr(false)
 
-  handle_commander  
   puts "#{[Time.now]} Client #{remote_ip} connected"
   n.send(set_bright(50, "smooth", 500), 0);
   if @clientHash[remote_ip] != nil and !@clientHash[remote_ip].closed? then
@@ -176,6 +171,8 @@ num = 0
   @new_client_list.push(remote_ip)
   @num_clients = @new_client_list.count
   printConnectedDevices
+
+  handle_commander  
   handle_connection
   end 
   end
