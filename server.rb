@@ -39,7 +39,7 @@ def resetConnection(addr)
     @clientHash.delete_if { |k, v| v == nil }
     @command = ""
     @new_client_list.delete(addr)
-    @new_client_list.compact
+    @threads.last().kill    
     printConnectedDevices
     end
     end
@@ -59,7 +59,6 @@ def sendToClient(command)
     begin
       @new_client_list.dup.each do |addr|
         if @clientHash[addr] != nil and !@clientHash[addr].closed? then
-
       @clientHash[addr].write(command)
 
   end      
@@ -95,7 +94,6 @@ begin
 
   if (@commander != nil and @logged_in) then
 @command = @commander.gets(15)
-sleep(0.0001)
 end
 rescue Errno::ECONNRESET => e
 
@@ -126,7 +124,7 @@ end
 
 if @command != nil and @command.start_with? "c" then
   tokens = @command.split(" ")
-
+  
   sendToClient(set_rgb(tokens[1], transition_effect, response_time))
 end
 
@@ -157,13 +155,14 @@ puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a t
   
   
 new_client = nil
+socket.listen 128
   
   loop do
   new_client = socket.accept
   new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+
 @threads <<  Thread.new(new_client) { |n| 
      sock_domain, remote_port, remote_hostname, remote_ip = n.peeraddr(false)
-
   puts "#{[Time.now]} Client #{remote_ip} connected"
   n.send(set_bright(50, "smooth", 500), 0);
   if @clientHash[remote_ip] != nil and !@clientHash[remote_ip].closed? then
@@ -175,7 +174,6 @@ new_client = nil
   @new_client_list.push(remote_ip)
   @num_clients = @new_client_list.count
   printConnectedDevices
-
   handle_commander  
   handle_connection
 }

@@ -35,7 +35,7 @@ fs.readFile('config.txt', 'utf8', function(err, contents) {
 
 
 server = process.argv[2];
-ips = ["192.168.1.59", "192.168.1.55", "192.168.1.32"];
+ips = ["192.168.1.59", "192.168.1.55", "192.168.1.2"];
 
 device = {};
 var color = 1;
