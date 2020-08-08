@@ -2,6 +2,12 @@ require 'socket'
 PORT = 55440
 $initial_brightness = 5050505050 
 @lock = Mutex.new
+$verbose_mode = false
+if ARGV[0] != nil then
+  if ARGV[0].chomp == "-v" then
+  $verbose_mode = true
+end
+end
 
 def set_rgb(rgb_value, effect, duration)
 cmd = "{\"id\":3,\"method\":\"set_rgb\",\"params\":[#{rgb_value},\"#{effect}\",#{duration}]}\r\n"
@@ -210,12 +216,14 @@ puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a t
 
 new_client = nil
 socket.listen 128
-
-
+if $verbose_mode == true then
+  puts "Verbose mode enabled, debug info will be shown"
+end
 loop do
 
-  
+  if $verbose_mode == true then
   showThreadInfo
+  end
       
   new_client = socket.accept
 
