@@ -109,9 +109,13 @@ response_time = 0 #ms response from bulb
 transition_effect = "sudden"
 
 loop do
-  if @new_client_list.count == 0 then 
+  if @new_client_list.count == 0 
+      then
 
-    commander = nil
+    @commander = nil
+    @handler_created = false
+    
+    return
     end
 begin
 @command = @command.chomp
