@@ -189,19 +189,18 @@ end
 
 def showThreadInfo
 
-
-   puts "Active threads: #{Thread.list.count}"
+   puts "Main Thread + \r\n"
+   puts "Active threads: #{Thread.list.count - 1}"
   
    client_threads = Thread.list.count{ |x| x.name != "cmd_thread" and 
     x != Thread.main and x != 'commander_thread'}
      
    puts "Num client threads: #{client_threads}"
-   printConnectedDevices
 
 
       
    @cmd_threads = Thread.list.count { |x| x.name ==  "cmd_thread"}
-   puts "Command threads: #{@cmd_threads}"
+   puts "Handler Thread: #{@cmd_threads}"
 
 end
 
@@ -215,17 +214,11 @@ socket.listen 128
 
 loop do
 
-
-    @thread_pool.each do |t|
-      t.exit
-    end
-
-    @thread_pool.clear
-
   
+  showThreadInfo
+      
   new_client = socket.accept
 
-    
   @threads << Thread.new(new_client) { |n| 
      sock_domain, remote_port, remote_hostname, remote_ip = n.peeraddr(false)
   puts "#{[Time.now]} Client #{remote_ip} connected"
@@ -254,8 +247,13 @@ loop do
 
 
 end
+ @thread_pool.each do |t|
+      t.exit
+    end
 
-  showThreadInfo
+    @thread_pool.clear
+
+
       }
   end
 
