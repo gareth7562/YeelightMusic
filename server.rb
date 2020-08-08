@@ -45,14 +45,19 @@ def resetConnection(addr)
     @clientHash[addr] = nil
     @clientHash.delete_if { |k, v| v == nil }
     @command = ""
-    @new_client_list.delete(addr)
+    Thread.list.each do |t|
+    if t.name == addr then
+      @thread_pool.push(t)
+end
+end
+
 
     end
     end
     end
 
 def printConnectedDevices 
-  
+ 
   puts "#{@new_client_list.count} devices connected."
 end
   
@@ -73,33 +78,25 @@ rescue Errno::EPIPE
     puts "#{[Time.now]} Broken connection for #{addr}"
     if !@disconnected.include? addr then
     @disconnected.push(addr) 
-    return
     end
 rescue Errno::ECONNRESET => e 
     puts "#{[Time.now]} Connection reset for #{addr} #{e}"  
-    if !@disconnected.include? addr then
+    if !@disconnected.include? addr then 
     @disconnected.push(addr)
-    return
     end
 rescue IOError
     if !@disconnected.include? addr then
     @disconnected.push(addr)
     end
     puts "#{[Time.now]} Error sending data to #{addr}"
-    return
 end
 
 
     @disconnected.each do |addr| 
     resetConnection(addr)
-    Thread.list.each do |t|
-      if t.name == addr then
-        @thread_pool.push(t)
 
-      end 
-    end
 end
-
+ 
  @disconnected.clear
 
 
@@ -128,8 +125,8 @@ if (@command == "disconnect") then
   if !@disconnected.include? addr then
   @disconnected.push(addr)
   @num_clients = 0
-end
   return
+end
 end
 end
 end
@@ -139,25 +136,33 @@ begin
    
   end
   rescue Errno::ECONNRESET => e
-
     puts "#{[Time.now]} Commander connection reset."
+
+
   @commander_thread.each do |ct|
   ct.exit
   end
   @logged_in = false
   @new_client_list.each do |addr|
-    resetConnection(addr)
-  end
-end
+    Thread.list.each do |t|
+      if t.name == addr then
+    @thread_pool.push(t)
+      end
+    end
 
+    resetConnection(addr)
+    end
+  @new_client_list.clear
+end
 
 if @command != nil and @command.start_with? "c" then
   tokens = @command.split(" ")
   @new_client_list.each do |addr|
   sendToClient(set_rgb(tokens[1], transition_effect, response_time), addr)
-  end
-end
 
+    end
+
+  end
 end
 end
 
@@ -185,6 +190,7 @@ new_client = nil
 socket.listen 128
 loop do
 
+
     @thread_pool.each do |t|
       t.exit
     end
@@ -209,14 +215,17 @@ loop do
   handle_commander
     
   puts "Active threads: #{Thread.list.count}"
-  puts "Num clients: #{@num_clients}"
-  Thread.current.name = remote_ip  
+  Thread.current.name = remote_ip
+  
+  client_threads = Thread.list.count{ |x| x.name != "cmd_thread" and 
+        x != Thread.main and x != 'commander_thread'}
      
+  puts "Num client threads: #{client_threads}"
   printConnectedDevices
 if  !@handler_created then
   Thread.new {
 
-     Thread.current.name = "connection_handler"
+     Thread.current.name ||= "cmd_thread"
      @handler_created = true
      
 
@@ -229,8 +238,8 @@ if  !@handler_created then
 end
 
       
-      @cmd_threads = Thread.list.count { |x| x.name == "connection_handler"}
-      puts "Command threads #{@cmd_threads}"
+      @cmd_threads = Thread.list.count { |x| x.name ==  "cmd_thread"}
+      puts "Command threads: #{@cmd_threads}"
   }
   end
 
