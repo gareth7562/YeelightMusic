@@ -25,13 +25,20 @@ socket = TCPServer.new('0.0.0.0', PORT)
 @commander = nil
 @num_clients = 0
 @threads = Array.new
+@thread_pool = Array.new
 @new_client_list = Array.new
+@commander_thread = Array.new 
+@disconnected = Array.new
 
+
+@handler_created = false
 @logged_in = false
 
 def resetConnection(addr)
 
+
     if addr != nil then
+
     puts "[#{Time.now}] Client #{addr} disconnected."
     if(@clientHash[addr] != nil and !@clientHash[addr].closed?) then
     @clientHash[addr].close
@@ -39,8 +46,13 @@ def resetConnection(addr)
     @clientHash.delete_if { |k, v| v == nil }
     @command = ""
     @new_client_list.delete(addr)
-    @threads.last().kill    
-    printConnectedDevices
+
+    Thread.list.each do |t|
+      if t.name == addr then
+        @thread_pool.push(t)
+
+    end
+    end
     end
     end
 end
@@ -55,87 +67,84 @@ trap "SIGINT" do
 
 exit 130
 end
-def sendToClient(command)
+def sendToClient(command, addr)
     begin
-      @new_client_list.dup.each do |addr|
-        if @clientHash[addr] != nil and !@clientHash[addr].closed? then
-      @clientHash[addr].write(command)
+      
+      if @clientHash[addr] != nil and !@clientHash[addr].closed? then
+      
+        @clientHash[addr].write(command)
+      end
 
-  end      
 rescue Errno::EPIPE
     puts "#{[Time.now]} Broken connection for #{addr}"
-    resetConnection(addr) 
+    @disconnected.push(addr) 
 rescue Errno::ECONNRESET => e 
-    resetConnection(addr)
-    puts "#{[Time.now]} Connection reset for #{addr} #{e}"         
+    puts "#{[Time.now]} Connection reset for #{addr} #{e}"             
+    @disconnected.push(addr)
 rescue IOError
-    resetConnection(addr)
+    @disconnected.push(addr)
     puts "#{[Time.now]} Error sending data to #{addr}"
-
 end
 end
-end
-
 
 def handle_connection
 
 prevCommand = nil
 response_time = 0 #ms response from bulb
 transition_effect = "sudden"
-loop do
 
+loop do
   if @new_client_list.count == 0  
     then 
-    @clientHash.clear
+
     commander = nil
-    return
-  end
-begin
-
-  if (@commander != nil and @logged_in) then
-@command = @commander.gets(15)
-end
-rescue Errno::ECONNRESET => e
-
-  puts "#{[Time.now]} Commander connection reset."
-  printConnectedDevices
-  @logged_in = false
-  @new_client_list.each do |addr|
-    resetConnection(addr) 
-    return
-  end           
-end
-
+    end
 begin
 @command = @command.chomp
 rescue NoMethodError => e
   command = "disconnect"
-end
 if (@command == "disconnect") then
 
   @command = ""
   puts "#{[Time.now]} Client disconnected normally"
   @clientHash.each do |addr, key|
-  resetConnection(addr)
+  @disconnected.push(addr)
+  @num_clients = 0
+end
+end
+end
+begin
+  if (@commander != nil and @logged_in) then
+  @command = @commander.gets(15)
+   
   end
-  num_clients = 0
+  rescue Errno::ECONNRESET => e
+
+    puts "#{[Time.now]} Commander connection reset."
+  @commander_thread.each do |ct|
+  ct.exit
+  end
+  @logged_in = false
+  @new_client_list.each do |addr|
+    resetConnection(addr)
+  end
 end
 
 
 if @command != nil and @command.start_with? "c" then
   tokens = @command.split(" ")
-  
-  sendToClient(set_rgb(tokens[1], transition_effect, response_time))
+  @new_client_list.each do |addr|
+  sendToClient(set_rgb(tokens[1], transition_effect, response_time), addr)
+  end
 end
 
 end
 end
-
 
 def handle_commander
-   Thread.new {
-
-
+@commander_thread << Thread.new {
+       
+        Thread.current.name = "commander_thread"
         login_socket = @command_socket.accept
         if @logged_in == false then
           if login_socket.gets(16).chomp == 'connect_string' then
@@ -152,31 +161,62 @@ puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
 puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a track via this server"
 
 
-  
-  
 new_client = nil
 socket.listen 128
-  
-  loop do
+loop do
+
+    @thread_pool.each do |t|
+      t.exit
+    end
+
+    @thread_pool.clear
+
+
+@disconnected.each do |addr| 
+     resetConnection(addr)
+    end
+
+ @disconnected.clear
+
   new_client = socket.accept
   new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-
-@threads <<  Thread.new(new_client) { |n| 
+   
+  @threads << Thread.new(new_client) { |n| 
      sock_domain, remote_port, remote_hostname, remote_ip = n.peeraddr(false)
   puts "#{[Time.now]} Client #{remote_ip} connected"
-  n.send(set_bright(50, "smooth", 500), 0);
+  n.send(set_bright(50, "smooth", 500), 0)
   if @clientHash[remote_ip] != nil and !@clientHash[remote_ip].closed? then
   @new_client_list.delete(remote_ip) 
   @clientHash[remote_ip].close
   end
-  
   @clientHash[remote_ip] = n
   @new_client_list.push(remote_ip)
   @num_clients = @new_client_list.count
+  handle_commander
+    
+  puts "Active threads: #{Thread.list.count}"
+  puts "Num clients: #{@num_clients}"
+  Thread.current.name = remote_ip  
+     
   printConnectedDevices
-  handle_commander  
-  handle_connection
-}
+if  !@handler_created then
+  Thread.new {
+
+     Thread.current.name = "connection_handler"
+     @handler_created = true
+     
+
+
+
+     handle_connection
+  }
 
 
 end
+
+      
+      @cmd_threads = Thread.list.count { |x| x.name == "connection_handler"}
+      puts "Command threads #{@cmd_threads}"
+  }
+  end
+
