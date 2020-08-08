@@ -47,15 +47,9 @@ def resetConnection(addr)
     @command = ""
     @new_client_list.delete(addr)
 
-    Thread.list.each do |t|
-      if t.name == addr then
-        @thread_pool.push(t)
-
     end
     end
     end
-    end
-end
 
 def printConnectedDevices 
   
@@ -77,12 +71,18 @@ def sendToClient(command, addr)
 
 rescue Errno::EPIPE
     puts "#{[Time.now]} Broken connection for #{addr}"
+    if !@disconnected.include? addr then
     @disconnected.push(addr) 
+    end
 rescue Errno::ECONNRESET => e 
-    puts "#{[Time.now]} Connection reset for #{addr} #{e}"             
+    puts "#{[Time.now]} Connection reset for #{addr} #{e}"  
+    if !@disconnected.include? addr then
     @disconnected.push(addr)
+    end
 rescue IOError
+    if !disconnected.include? addr then
     @disconnected.push(addr)
+    end
     puts "#{[Time.now]} Error sending data to #{addr}"
 end
 end
@@ -94,8 +94,7 @@ response_time = 0 #ms response from bulb
 transition_effect = "sudden"
 
 loop do
-  if @new_client_list.count == 0  
-    then 
+  if @new_client_list.count == 0 then 
 
     commander = nil
     end
@@ -108,8 +107,10 @@ if (@command == "disconnect") then
   @command = ""
   puts "#{[Time.now]} Client disconnected normally"
   @clientHash.each do |addr, key|
+  if !@disconnected.include? addr then
   @disconnected.push(addr)
   @num_clients = 0
+end
 end
 end
 end
@@ -173,8 +174,14 @@ loop do
 
 
 @disconnected.each do |addr| 
-     resetConnection(addr)
+    resetConnection(addr)
+    Thread.list.each do |t|
+      if t.name == addr then
+        @thread_pool.push(t)
+
+      end 
     end
+end
 
  @disconnected.clear
 
