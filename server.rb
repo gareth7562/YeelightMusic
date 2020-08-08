@@ -1,6 +1,6 @@
 require 'socket'
 PORT = 55440
-
+$initial_brightness = 5050505050 
 @lock = Mutex.new
 
 def set_rgb(rgb_value, effect, duration)
@@ -48,7 +48,10 @@ def resetConnection(addr)
     Thread.list.each do |t|
     if t.name == addr then
       @thread_pool.push(t)
+
 end
+
+    @new_client_list.delete(addr)
 end
 
 
@@ -68,10 +71,10 @@ exit 130
 end
 def sendToClient(command, addr)
     begin
-      
+      if Thread.current.name == "cmd_thread" then 
       if @clientHash[addr] != nil and !@clientHash[addr].closed? then
-      
         @clientHash[addr].write(command)
+      end
       end
 
 rescue Errno::EPIPE
@@ -94,12 +97,10 @@ end
 
     @disconnected.each do |addr| 
     resetConnection(addr)
-
+    
+    @disconnected.clear
 end
  
- @disconnected.clear
-
-
 end
 
 def handle_connection
@@ -136,8 +137,9 @@ end
 end
 begin
   if (@commander != nil and @logged_in) then
+  @lock.synchronize {
   @command = @commander.gets(15)
-   
+  }
   end
   rescue Errno::ECONNRESET => e
     puts "#{[Time.now]} Commander connection reset."
@@ -156,14 +158,12 @@ begin
 
     resetConnection(addr)
     end
-  @new_client_list.clear
 end
 
 if @command != nil and @command.start_with? "c" then
   tokens = @command.split(" ")
   @new_client_list.each do |addr|
   sendToClient(set_rgb(tokens[1], transition_effect, response_time), addr)
-
     end
 
   end
@@ -186,12 +186,33 @@ def handle_commander
 
 end
 
+
+def showThreadInfo
+
+
+   puts "Active threads: #{Thread.list.count}"
+  
+   client_threads = Thread.list.count{ |x| x.name != "cmd_thread" and 
+    x != Thread.main and x != 'commander_thread'}
+     
+   puts "Num client threads: #{client_threads}"
+   printConnectedDevices
+
+
+      
+   @cmd_threads = Thread.list.count { |x| x.name ==  "cmd_thread"}
+   puts "Command threads: #{@cmd_threads}"
+
+end
+
 puts "Server Listening on #{PORT}. Press CTRL+C to cancel."
 puts "Commander on port 1337 run node myapp.js <server ip> track.mp3 to play a track via this server"
 
 
 new_client = nil
 socket.listen 128
+
+
 loop do
 
 
@@ -201,14 +222,14 @@ loop do
 
     @thread_pool.clear
 
-
+  
   new_client = socket.accept
-  new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-   
+
+    
   @threads << Thread.new(new_client) { |n| 
      sock_domain, remote_port, remote_hostname, remote_ip = n.peeraddr(false)
   puts "#{[Time.now]} Client #{remote_ip} connected"
-  n.send(set_bright(50, "smooth", 500), 0)
+  n.write(set_bright($initial_brightness, "smooth", 500), 0)
   if @clientHash[remote_ip] != nil and !@clientHash[remote_ip].closed? then
   @new_client_list.delete(remote_ip) 
   @clientHash[remote_ip].close
@@ -217,16 +238,9 @@ loop do
   @new_client_list.push(remote_ip)
   @num_clients = @new_client_list.count
   handle_commander
-    
-  puts "Active threads: #{Thread.list.count}"
-  Thread.current.name = remote_ip
-  
-  client_threads = Thread.list.count{ |x| x.name != "cmd_thread" and 
-        x != Thread.main and x != 'commander_thread'}
      
-  puts "Num client threads: #{client_threads}"
-  printConnectedDevices
-if  !@handler_created then
+  Thread.current.name = remote_ip
+  if  !@handler_created then
   Thread.new {
 
      Thread.current.name ||= "cmd_thread"
@@ -234,16 +248,14 @@ if  !@handler_created then
      
 
 
-
      handle_connection
   }
 
 
+
 end
 
-      
-      @cmd_threads = Thread.list.count { |x| x.name ==  "cmd_thread"}
-      puts "Command threads: #{@cmd_threads}"
-  }
+  showThreadInfo
+      }
   end
 
