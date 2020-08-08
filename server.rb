@@ -73,18 +73,36 @@ rescue Errno::EPIPE
     puts "#{[Time.now]} Broken connection for #{addr}"
     if !@disconnected.include? addr then
     @disconnected.push(addr) 
+    return
     end
 rescue Errno::ECONNRESET => e 
     puts "#{[Time.now]} Connection reset for #{addr} #{e}"  
     if !@disconnected.include? addr then
     @disconnected.push(addr)
+    return
     end
 rescue IOError
-    if !disconnected.include? addr then
+    if !@disconnected.include? addr then
     @disconnected.push(addr)
     end
     puts "#{[Time.now]} Error sending data to #{addr}"
+    return
 end
+
+
+    @disconnected.each do |addr| 
+    resetConnection(addr)
+    Thread.list.each do |t|
+      if t.name == addr then
+        @thread_pool.push(t)
+
+      end 
+    end
+end
+
+ @disconnected.clear
+
+
 end
 
 def handle_connection
@@ -111,6 +129,7 @@ if (@command == "disconnect") then
   @disconnected.push(addr)
   @num_clients = 0
 end
+  return
 end
 end
 end
@@ -172,18 +191,6 @@ loop do
 
     @thread_pool.clear
 
-
-@disconnected.each do |addr| 
-    resetConnection(addr)
-    Thread.list.each do |t|
-      if t.name == addr then
-        @thread_pool.push(t)
-
-      end 
-    end
-end
-
- @disconnected.clear
 
   new_client = socket.accept
   new_client.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
